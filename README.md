@@ -5,6 +5,9 @@
 ## Test Update
 This is a small test edit to demonstrate branch creation and pushing.
 
+## Another Test
+Second test branch with additional content added.
+
 ## Setup
 
 ```sh
