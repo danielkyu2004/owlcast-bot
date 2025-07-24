@@ -7,8 +7,9 @@ export default (app) => {
 
   app.on("pull_request.opened", async (context) => {
     app.log.info("Pull request opened");
+    const prInfo = await getOwlcastPRInfoFromAPI(context);
     return context.octokit.issues.createComment(context.issue({
-      body:context.payload['pull_request']['body'],
+      body: prInfo
     }));
   });
 
@@ -85,6 +86,7 @@ async function getOwlcastPRInfoFromAPI(context) {
     const liveUrls = data.links.live_urls || [];
     const imageUrls = data.links.image_urls || [];
     const description = data.description || "";
+    const missingInfo = data.missing_info || [];
 
     const prInfo = `
 # What Owlcast Scraped
@@ -93,20 +95,19 @@ async function getOwlcastPRInfoFromAPI(context) {
 Description: ${description}
 
 Feature Flags: 
-  --
-  ${featureFlags.join("\n")}
+${featureFlags.map(link => `- ${link}`).join("\n")}
 
 Loom Links:
-  --
-  ${loomLinks.join("\n")}
+${loomLinks.map(link => `- ${link}`).join("\n")}
 
 Live URLs: 
-  --
-  ${liveUrls.join("\n")}
+${liveUrls.map(link => `- ${link}`).join("\n")}
 
 Image URLs: 
-  --
-  ${imageUrls.join("\n")}
+${imageUrls.map(link => `- ${link}`).join("\n")}
+
+Missing Info:
+${missingInfo}
     `
 
     return prInfo;
