@@ -106,12 +106,24 @@ function getOwlcastPRInfo(context) {
   const { featureFlags, loomLinks, liveUrls, imageUrls } = parseUrlTypes(body);
 
   const prInfo = `
-  ${formattedTitle}
+  ## ${formattedTitle}
   Description: ${description}
-  Feature Flags: - ${featureFlags.join("\n- ")}
-  Loom Links: - ${loomLinks.join("\n- ")}
-  Live URLs: - ${liveUrls.join("\n- ")}
-  Image URLs: - ${imageUrls.join("\n- ")}
+
+  Feature Flags: 
+  --
+  ${featureFlags.join("\n")}
+
+  Loom Links:
+  --
+  ${loomLinks.join("\n")}
+
+  Live URLs: 
+  --
+  ${liveUrls.join("\n")}
+
+  Image URLs: 
+  --
+  ${imageUrls.join("\n")}
   `
 
   return prInfo;
@@ -123,11 +135,21 @@ function parseUrlTypes(body) {
   // only works for codehs
   const featureFlagRegex = /(?:https?:\/\/)?(?:www\.)?codehs\.com\/internal\/feature_flag\/\d+/g;
   // ensure all links have https:// before adding to the set
-  const featureFlags = [...new Set(body.match(featureFlagRegex) || [])].map(link => link.replace(/^http:/, 'https:'));
+  let featureFlags = [...new Set((body.match(featureFlagRegex) || []).map(link => {
+    if (!link.startsWith('http')) return 'https://' + link;
+    return link.replace(/^http:/, 'https:');
+  }))];
+  // Add bullet points to the loom links
+  featureFlags = featureFlags.map(link => `- ${link}`);
 
   // Find the loom links in the body
   const loomRegex = /(?:https?:\/\/)?(?:www\.)?loom\.com\/share\/[a-zA-Z0-9]+/g;
-  const loomLinks = [...new Set(body.match(loomRegex) || [])].map(link => link.replace(/^http:/, 'https:'));
+  let loomLinks = [...new Set((body.match(loomRegex) || []).map(link => {
+    if (!link.startsWith('http')) return 'https://' + link;
+    return link.replace(/^http:/, 'https:');
+  }))];
+  // Add bullet points to the loom links
+  loomLinks = loomLinks.map(link => `- ${link}`);
 
   // Trust that live urls are after the Live URLs: label
   const liveUrlsIndex = body.indexOf("Live URLs:");
@@ -138,12 +160,21 @@ function parseUrlTypes(body) {
       const liveUrlsText = body.substring(newlineIndex).trim();
       // Remove hyphens and extract only the URLs
       const liveUrlMatches = liveUrlsText.match(/https:\/\/[^\s]+/g) || [];
-      liveUrls = [...new Set(liveUrlMatches)].map(link => link.replace(/^http:/, 'https:'));
-  }
+      liveUrls = [...new Set(liveUrlMatches.map(link => {
+        if (!link.startsWith('http')) return 'https://' + link;
+        return link.replace(/^http:/, 'https:');
+      }))];
+      liveUrls = liveUrls.map(link => `- ${link}`);
+    }
 
   // Find image URLs in src attributes
   const imageUrlRegex = /https:\/\/github\.com\/user-attachments\/assets\/[a-zA-Z0-9-]+/g;
-  const imageUrls = [...new Set(body.match(imageUrlRegex) || [])].map(link => link.replace(/^http:/, 'https:'));
+  let imageUrls = [...new Set((body.match(imageUrlRegex) || []).map(link => {
+    if (!link.startsWith('http')) return 'https://' + link;
+    return link.replace(/^http:/, 'https:');
+  }))];
+  // Add bullet points to the image urls
+  imageUrls = imageUrls.map(link => `- ${link}`);
 
   return {
       featureFlags,
