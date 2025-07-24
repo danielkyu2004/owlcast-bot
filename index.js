@@ -106,22 +106,24 @@ function getOwlcastPRInfo(context) {
   const { featureFlags, loomLinks, liveUrls, imageUrls } = parseUrlTypes(body);
 
   const prInfo = `
-  ## ${formattedTitle}
-  Description: ${description}
+# What Owlcast Scraped
 
-  Feature Flags: 
+## ${formattedTitle}
+Description: ${description}
+
+Feature Flags: 
   --
   ${featureFlags.join("\n")}
 
-  Loom Links:
+Loom Links:
   --
   ${loomLinks.join("\n")}
 
-  Live URLs: 
+Live URLs: 
   --
   ${liveUrls.join("\n")}
 
-  Image URLs: 
+Image URLs: 
   --
   ${imageUrls.join("\n")}
   `
