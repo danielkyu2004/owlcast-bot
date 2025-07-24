@@ -23,8 +23,8 @@ export default (app) => {
       comment.user.login === 'owlcast-bot[bot]'
     );
 
-    // Get the PR info
-    const prInfo = getOwlcastPRInfo(context);
+    // Get the PR info from API
+    const prInfo = await getOwlcastPRInfoFromAPI(context);
 
     app.log.info(prInfo);
     
@@ -52,6 +52,70 @@ export default (app) => {
   // https://probot.github.io/docs/development/
 };
 
+
+async function getOwlcastPRInfoFromAPI(context) {
+  const body = context.payload['pull_request']['body'];
+  const number = context.payload['pull_request']['number'];
+  let title = context.payload['pull_request']['title'];
+
+  // Remove the percent status from the title
+  const titlePercent = title.indexOf("[");
+  if (titlePercent !== -1) {
+      title = title.substring(0, titlePercent).trim();
+  }
+
+  const formattedTitle = `#${number} ${title}`;
+
+  try {
+    const response = await fetch('http://localhost:9000/api/get-specific-pr-data/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ body })
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const featureFlags = data.links.feature_flags || [];
+    const loomLinks = data.links.loom_links || [];
+    const liveUrls = data.links.live_urls || [];
+    const imageUrls = data.links.image_urls || [];
+    const description = data.description || "";
+
+    const prInfo = `
+# What Owlcast Scraped
+
+## ${formattedTitle}
+Description: ${description}
+
+Feature Flags: 
+  --
+  ${featureFlags.join("\n")}
+
+Loom Links:
+  --
+  ${loomLinks.join("\n")}
+
+Live URLs: 
+  --
+  ${liveUrls.join("\n")}
+
+Image URLs: 
+  --
+  ${imageUrls.join("\n")}
+    `
+
+    return prInfo;
+  } catch (error) {
+    console.error('Error calling API:', error);
+    // Fallback to original function if API fails
+    return getOwlcastPRInfo(context);
+  }
+}
 
 function getOwlcastPRInfo(context) {
   const body = context.payload['pull_request']['body'];
